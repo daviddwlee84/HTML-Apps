@@ -1,0 +1,843 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Triangular Arbitrage Visualizer</title>
+  <meta name="description"
+    content="Visualize triangular relationships between three fiat or crypto assets using public data sources." />
+  <style>
+    :root {
+      --bg: #0b1021;
+      --panel: #11172d;
+      --card: #141c34;
+      --border: #1f2a45;
+      --text: #e8edf9;
+      --muted: #9fb3d1;
+      --accent: #8be9fd;
+      --accent-2: #c792ea;
+      --danger: #f87171;
+      --success: #34d399;
+      --warn: #fbbf24;
+      --shadow: 0 15px 60px rgba(0, 0, 0, 0.35);
+      --radius: 14px;
+      --input-bg: #0f1428;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Inter", "SF Pro Display", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: radial-gradient(circle at 10% 20%, rgba(78, 53, 162, 0.25), transparent 35%),
+        radial-gradient(circle at 80% 0%, rgba(70, 149, 255, 0.18), transparent 25%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 26px 18px 60px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .wrap {
+      width: min(1200px, 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    header {
+      background: linear-gradient(135deg, rgba(20, 28, 52, 0.9), rgba(16, 22, 42, 0.9));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .title {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-top: 6px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px 16px 14px;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    select,
+    input {
+      background: var(--input-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 140ms ease, box-shadow 140ms ease, transform 80ms ease;
+    }
+
+    select:focus,
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(139, 233, 253, 0.18);
+      transform: translateY(-1px);
+    }
+
+    button {
+      background: linear-gradient(120deg, #21d4fd, #b721ff);
+      color: #0b0f1f;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 15px;
+      font-weight: 650;
+      cursor: pointer;
+      box-shadow: 0 10px 25px rgba(33, 212, 253, 0.25);
+      transition: transform 120ms ease, box-shadow 120ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 28px rgba(33, 212, 253, 0.35);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .note {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 14px;
+    }
+
+    .viz-title {
+      font-size: 14px;
+      color: var(--muted);
+      margin: 0 0 10px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .status-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .status-bar strong {
+      color: var(--text);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    .badge.warn {
+      border-color: rgba(251, 191, 36, 0.5);
+      color: var(--warn);
+    }
+
+    .badge.error {
+      border-color: rgba(248, 113, 113, 0.5);
+      color: var(--danger);
+    }
+
+    .badge.success {
+      border-color: rgba(52, 211, 153, 0.5);
+      color: var(--success);
+    }
+
+    .triangle-wrap {
+      position: relative;
+      height: 360px;
+      background: linear-gradient(160deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0));
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    svg#triangle {
+      width: 100%;
+      height: 100%;
+    }
+
+    .node-label {
+      font-weight: 700;
+      fill: var(--text);
+    }
+
+    .edge-label {
+      fill: var(--muted);
+      font-size: 12px;
+    }
+
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    .matrix-table th,
+    .matrix-table td {
+      border: 1px solid var(--border);
+      padding: 10px;
+      text-align: center;
+      font-size: 13px;
+      background: var(--panel);
+      position: relative;
+    }
+
+    .matrix-table th {
+      background: rgba(255, 255, 255, 0.03);
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .matrix-table td span.small {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .matrix-table td .tag {
+      display: inline-flex;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.25);
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 6px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 8px;
+    }
+
+    .legend .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .error-text {
+      color: var(--danger);
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      font-size: 12px;
+    }
+
+    .chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--muted);
+    }
+
+    @media (max-width: 700px) {
+      .triangle-wrap {
+        height: 300px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+        <div>
+          <h1 class="title">Triangular Arbitrage Visualizer</h1>
+          <div class="subtitle">
+            Compare three assets (fiat or crypto) using public data. Switch between mid/latest and bid/ask (when
+            available), then visualize relationships as a triangle and conversion matrix.
+          </div>
+        </div>
+        <button id="refreshBtn">Refresh now</button>
+      </div>
+
+      <div class="controls">
+        <label>
+          Asset type
+          <select id="assetType">
+            <option value="fiat">Fiat (exchangerate.host mid)</option>
+            <option value="crypto">Crypto (Binance bookTicker)</option>
+          </select>
+        </label>
+        <label>
+          Preset
+          <select id="preset">
+            <option value="fiat-preset">USD / TWD / CNY</option>
+            <option value="crypto-preset">BTC / USDT / ETH</option>
+            <option value="custom">Custom</option>
+          </select>
+        </label>
+        <label>
+          Price mode
+          <select id="priceMode">
+            <option value="mid">Mid / latest</option>
+            <option value="bidask">Bid / Ask (if available)</option>
+          </select>
+        </label>
+        <label>
+          Asset 1
+          <input id="assetA" placeholder="e.g., USD or BTC" />
+        </label>
+        <label>
+          Asset 2
+          <input id="assetB" placeholder="e.g., TWD or USDT" />
+        </label>
+        <label>
+          Asset 3
+          <input id="assetC" placeholder="e.g., CNY or ETH" />
+        </label>
+      </div>
+      <div class="note" id="modeNote">Fiat uses mid/last rates only. Bid/ask available for crypto pairs when Binance
+        provides them.</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="viz-title">Triangle view</div>
+        <div class="triangle-wrap">
+          <svg id="triangle" viewBox="0 0 400 360" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <linearGradient id="edgeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.8" />
+                <stop offset="100%" stop-color="var(--accent-2)" stop-opacity="0.8" />
+              </linearGradient>
+            </defs>
+            <g id="triangleEdges"></g>
+            <g id="triangleLabels"></g>
+            <g id="triangleNodes"></g>
+          </svg>
+        </div>
+        <div class="legend">
+          <span><span class="dot" style="background: var(--accent);"></span>Direct ticker</span>
+          <span><span class="dot" style="background: var(--accent-2);"></span>Inverted</span>
+          <span><span class="dot" style="background: var(--warn);"></span>Composed / fallback</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="viz-title">Matrix / heatmap</div>
+        <div id="matrixWrap"></div>
+        <div class="legend">
+          <span>Row → Column conversion. Greener = stronger row; Redder = weaker row.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="status-bar" id="statusBar">
+        <span class="badge warn">Waiting for first refresh…</span>
+      </div>
+      <div class="chips">
+        <span class="chip" id="sourceChip">Source: —</span>
+        <span class="chip" id="updatedChip">Updated: —</span>
+        <span class="chip" id="errorChip"
+          style="display:none; border-color: rgba(248,113,113,0.5); color: var(--danger);">Error: —</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const PRESETS = {
+        fiat: ["USD", "TWD", "CNY"],
+        crypto: ["BTC", "USDT", "ETH"],
+      };
+
+      const el = {
+        assetType: document.getElementById("assetType"),
+        preset: document.getElementById("preset"),
+        priceMode: document.getElementById("priceMode"),
+        assetA: document.getElementById("assetA"),
+        assetB: document.getElementById("assetB"),
+        assetC: document.getElementById("assetC"),
+        refresh: document.getElementById("refreshBtn"),
+        matrixWrap: document.getElementById("matrixWrap"),
+        statusBar: document.getElementById("statusBar"),
+        sourceChip: document.getElementById("sourceChip"),
+        updatedChip: document.getElementById("updatedChip"),
+        errorChip: document.getElementById("errorChip"),
+        modeNote: document.getElementById("modeNote"),
+        triangleNodes: document.getElementById("triangleNodes"),
+        triangleEdges: document.getElementById("triangleEdges"),
+        triangleLabels: document.getElementById("triangleLabels"),
+      };
+
+      const state = {
+        lastResult: null,
+      };
+
+      function setInputs(arr) {
+        el.assetA.value = arr[0] || "";
+        el.assetB.value = arr[1] || "";
+        el.assetC.value = arr[2] || "";
+      }
+
+      function getAssets() {
+        return [el.assetA.value, el.assetB.value, el.assetC.value].map(x => (x || "").trim().toUpperCase()).filter(Boolean);
+      }
+
+      function formatNumber(num) {
+        if (num === null || num === undefined || Number.isNaN(num)) return "—";
+        if (num >= 1000) return num.toFixed(2);
+        if (num >= 1) return num.toFixed(4);
+        if (num >= 0.01) return num.toFixed(6);
+        return num.toExponential(2);
+      }
+
+      function colorForRate(rate) {
+        if (rate === null || rate === undefined || Number.isNaN(rate)) return "transparent";
+        const diff = Math.log(rate);
+        const intensity = Math.min(1, Math.abs(diff));
+        const hue = diff >= 0 ? 145 : 0;
+        const light = 18 + (1 - intensity) * 18;
+        const sat = 65;
+        return `hsl(${hue}deg ${sat}% ${light}%)`;
+      }
+
+      function setStatus({ text, level = "info" }) {
+        const badge = document.createElement("span");
+        badge.className = "badge";
+        if (level === "error") badge.classList.add("error");
+        if (level === "warn") badge.classList.add("warn");
+        if (level === "success") badge.classList.add("success");
+        badge.textContent = text;
+        el.statusBar.innerHTML = "";
+        el.statusBar.appendChild(badge);
+      }
+
+      function setError(message) {
+        el.errorChip.style.display = "inline-flex";
+        el.errorChip.textContent = `Error: ${message}`;
+        setStatus({ text: message, level: "error" });
+      }
+
+      function clearError() {
+        el.errorChip.style.display = "none";
+      }
+
+      function renderMatrix(assets, matrix, info) {
+        const mode = info.mode;
+        const table = document.createElement("table");
+        table.className = "matrix-table";
+
+        const thead = document.createElement("thead");
+        const headRow = document.createElement("tr");
+        headRow.appendChild(document.createElement("th"));
+        assets.forEach(a => {
+          const th = document.createElement("th");
+          th.textContent = a;
+          headRow.appendChild(th);
+        });
+        thead.appendChild(headRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement("tbody");
+        assets.forEach((rowAsset, r) => {
+          const tr = document.createElement("tr");
+          const head = document.createElement("th");
+          head.textContent = rowAsset + " →";
+          tr.appendChild(head);
+          assets.forEach((colAsset, c) => {
+            const td = document.createElement("td");
+            const rate = matrix[r][c];
+            td.textContent = formatNumber(rate);
+            td.style.background = colorForRate(rate);
+            if (r === c) {
+              td.style.background = "rgba(255,255,255,0.03)";
+              td.style.color = "var(--muted)";
+            }
+            const tag = document.createElement("div");
+            tag.className = "tag";
+            if (r === c) {
+              tag.textContent = "Self";
+            } else if (info.tags && info.tags[`${rowAsset}-${colAsset}`]) {
+              tag.textContent = info.tags[`${rowAsset}-${colAsset}`];
+            } else {
+              tag.textContent = mode === "bidask" ? "mid (fallback)" : "mid";
+            }
+            td.appendChild(tag);
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+
+        el.matrixWrap.innerHTML = "";
+        el.matrixWrap.appendChild(table);
+      }
+
+      function renderTriangle(assets, edges) {
+        const positions = [
+          { x: 200, y: 30 },
+          { x: 40, y: 300 },
+          { x: 360, y: 300 },
+        ];
+        const nodesGroup = el.triangleNodes;
+        const edgesGroup = el.triangleEdges;
+        const labelsGroup = el.triangleLabels;
+        nodesGroup.innerHTML = "";
+        edgesGroup.innerHTML = "";
+        labelsGroup.innerHTML = "";
+
+        assets.forEach((asset, idx) => {
+          const { x, y } = positions[idx];
+          const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          circle.setAttribute("cx", x);
+          circle.setAttribute("cy", y);
+          circle.setAttribute("r", "24");
+          circle.setAttribute("fill", "url(#edgeGradient)");
+          circle.setAttribute("stroke", "var(--border)");
+          circle.setAttribute("stroke-width", "2");
+          nodesGroup.appendChild(circle);
+
+          const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          label.setAttribute("x", x);
+          label.setAttribute("y", y + 5);
+          label.setAttribute("text-anchor", "middle");
+          label.setAttribute("class", "node-label");
+          label.textContent = asset;
+          nodesGroup.appendChild(label);
+        });
+
+        const edgeOrder = [
+          [0, 1],
+          [1, 2],
+          [2, 0],
+        ];
+
+        edgeOrder.forEach(([i, j]) => {
+          const from = assets[i];
+          const to = assets[j];
+          const edgeKey = `${from}-${to}`;
+          const info = edges[edgeKey] || {};
+          const { x: x1, y: y1 } = positions[i];
+          const { x: x2, y: y2 } = positions[j];
+
+          const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          line.setAttribute("x1", x1);
+          line.setAttribute("y1", y1);
+          line.setAttribute("x2", x2);
+          line.setAttribute("y2", y2);
+          line.setAttribute("stroke", info.via === "direct" ? "url(#edgeGradient)" : info.via === "inverted" ? "var(--accent-2)" : "var(--warn)");
+          line.setAttribute("stroke-width", "4");
+          line.setAttribute("stroke-linecap", "round");
+          line.setAttribute("opacity", info.mid ? "0.95" : "0.4");
+          edgesGroup.appendChild(line);
+
+          const midX = (x1 + x2) / 2;
+          const midY = (y1 + y2) / 2;
+          const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          label.setAttribute("x", midX);
+          label.setAttribute("y", midY - 6);
+          label.setAttribute("text-anchor", "middle");
+          label.setAttribute("class", "edge-label");
+
+          const parts = [];
+          if (info.mid) parts.push(`mid ${formatNumber(info.mid)}`);
+          if (info.bid && info.ask) parts.push(`bid ${formatNumber(info.bid)} / ask ${formatNumber(info.ask)}`);
+          if (!parts.length) parts.push("N/A");
+          label.textContent = `${from} → ${to}: ${parts.join("  ·  ")}`;
+          labelsGroup.appendChild(label);
+
+          const sourceLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          sourceLabel.setAttribute("x", midX);
+          sourceLabel.setAttribute("y", midY + 12);
+          sourceLabel.setAttribute("text-anchor", "middle");
+          sourceLabel.setAttribute("class", "edge-label");
+          sourceLabel.style.fill = "var(--muted)";
+          sourceLabel.textContent = info.symbol ? `${info.symbol} (${info.via || "composed"})` : info.via || "";
+          labelsGroup.appendChild(sourceLabel);
+        });
+      }
+
+      async function fetchFiat(assets) {
+        const url = `https://api.exchangerate.host/latest?base=USD&symbols=${encodeURIComponent(assets.join(","))}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`exchangerate.host error: ${res.status}`);
+        const data = await res.json();
+        if (data && data.success === false) {
+          throw new Error(data.error?.type || "exchangerate.host failed");
+        }
+        const rates = Object.assign({}, data.rates || {});
+        rates.USD = 1;
+        const missing = assets.filter(a => rates[a] === undefined);
+        if (missing.length) {
+          throw new Error(`Missing rates for: ${missing.join(", ")}`);
+        }
+        const getMid = (a, b) => rates[b] / rates[a];
+        const matrix = assets.map(from => assets.map(to => (from === to ? 1 : getMid(from, to))));
+        const edges = {};
+        const pairs = [
+          [assets[0], assets[1]],
+          [assets[1], assets[2]],
+          [assets[2], assets[0]],
+        ];
+        pairs.forEach(([from, to]) => {
+          edges[`${from}-${to}`] = {
+            from,
+            to,
+            mid: getMid(from, to),
+            via: "derived",
+            symbol: "FX (USD ref)",
+          };
+        });
+        return { matrix, edges, mode: "mid", tags: {}, source: "exchangerate.host (USD base, mid)" };
+      }
+
+      async function fetchBinanceTicker(symbol) {
+        try {
+          const res = await fetch(`https://api.binance.com/api/v3/ticker/bookTicker?symbol=${symbol}`);
+          if (!res.ok) return null;
+          const data = await res.json();
+          const bid = Number(data.bidPrice);
+          const ask = Number(data.askPrice);
+          const mid = (bid + ask) / 2;
+          return { bid, ask, mid, symbol };
+        } catch (err) {
+          return null;
+        }
+      }
+
+      async function fetchCrypto(assets) {
+        const pairMap = {};
+        const tags = {};
+        const combos = [
+          [assets[0], assets[1]],
+          [assets[1], assets[2]],
+          [assets[0], assets[2]],
+        ];
+
+        async function addPair(a, b) {
+          const key = [a, b].sort().join("-");
+          if (pairMap[key]) return;
+          let ticker = await fetchBinanceTicker(`${a}${b}`);
+          if (ticker) {
+            pairMap[key] = { base: a, quote: b, ...ticker, via: "direct" };
+            return;
+          }
+          ticker = await fetchBinanceTicker(`${b}${a}`);
+          if (ticker) {
+            pairMap[key] = { base: b, quote: a, ...ticker, via: "inverted" };
+          }
+        }
+
+        for (const [a, b] of combos) {
+          await addPair(a, b);
+        }
+
+        const keys = Object.keys(pairMap);
+        if (!keys.length) {
+          throw new Error("No Binance pairs found for these assets");
+        }
+
+        function midRate(from, to, visited = new Set()) {
+          if (from === to) return 1;
+          const key = [from, to].sort().join("-");
+          const info = pairMap[key];
+          if (info) {
+            return info.base === from ? info.mid : 1 / info.mid;
+          }
+          visited.add(from);
+          for (const k of assets) {
+            if (k === from || k === to || visited.has(k)) continue;
+            const r1 = midRate(from, k, visited);
+            const r2 = midRate(k, to, visited);
+            if (r1 && r2) return r1 * r2;
+          }
+          return null;
+        }
+
+        const matrix = assets.map(from => assets.map(to => midRate(from, to)));
+
+        const edges = {};
+        const ordered = [
+          [assets[0], assets[1]],
+          [assets[1], assets[2]],
+          [assets[2], assets[0]],
+        ];
+        ordered.forEach(([from, to]) => {
+          const key = [from, to].sort().join("-");
+          const info = pairMap[key];
+          if (info && info.base === from) {
+            edges[`${from}-${to}`] = {
+              from,
+              to,
+              mid: info.mid,
+              bid: info.bid,
+              ask: info.ask,
+              via: "direct",
+              symbol: info.symbol,
+            };
+            tags[`${from}-${to}`] = `${info.symbol} (direct)`;
+          } else if (info && info.base === to) {
+            edges[`${from}-${to}`] = {
+              from,
+              to,
+              mid: 1 / info.mid,
+              bid: info.ask ? 1 / info.ask : null,
+              ask: info.bid ? 1 / info.bid : null,
+              via: "inverted",
+              symbol: info.symbol,
+            };
+            tags[`${from}-${to}`] = `${info.symbol} (inverted)`;
+          } else {
+            edges[`${from}-${to}`] = {
+              from,
+              to,
+              mid: midRate(from, to),
+              via: "composed",
+              symbol: "composed",
+            };
+            tags[`${from}-${to}`] = "composed";
+          }
+        });
+
+        return { matrix, edges, mode: el.priceMode.value, tags, source: "Binance bookTicker" };
+      }
+
+      async function refresh() {
+        clearError();
+        setStatus({ text: "Refreshing…", level: "info" });
+        const assets = getAssets();
+        if (assets.length !== 3) {
+          setError("Please provide three asset symbols.");
+          return;
+        }
+        const unique = new Set(assets);
+        if (unique.size !== 3) {
+          setError("Assets must be unique.");
+          return;
+        }
+
+        try {
+          let result;
+          if (el.assetType.value === "fiat") {
+            if (el.priceMode.value === "bidask") {
+              el.priceMode.value = "mid";
+            }
+            result = await fetchFiat(assets);
+          } else {
+            result = await fetchCrypto(assets);
+          }
+          const now = new Date();
+          state.lastResult = { assets, result, fetchedAt: now };
+          renderMatrix(assets, result.matrix, result);
+          renderTriangle(assets, result.edges);
+          el.updatedChip.textContent = `Updated: ${now.toLocaleTimeString()}`;
+          el.sourceChip.textContent = `Source: ${result.source}`;
+          setStatus({ text: "Data refreshed", level: "success" });
+        } catch (err) {
+          console.error(err);
+          setError(err.message || "Refresh failed");
+        }
+      }
+
+      function handlePresetChange() {
+        const preset = el.preset.value;
+        if (preset === "fiat-preset") {
+          el.assetType.value = "fiat";
+          setInputs(PRESETS.fiat);
+        } else if (preset === "crypto-preset") {
+          el.assetType.value = "crypto";
+          setInputs(PRESETS.crypto);
+        }
+      }
+
+      function updateModeNote() {
+        if (el.assetType.value === "fiat") {
+          el.priceMode.value = "mid";
+          el.priceMode.disabled = false;
+          el.modeNote.textContent = "Fiat uses mid/last rates only (exchangerate.host).";
+        } else {
+          el.priceMode.disabled = false;
+          el.modeNote.textContent = "Binance provides bid/ask for available crypto pairs. Missing pairs fall back to composed mid.";
+        }
+      }
+
+      // Event wiring
+      el.refresh.addEventListener("click", refresh);
+      el.preset.addEventListener("change", () => { handlePresetChange(); });
+      el.assetType.addEventListener("change", () => { updateModeNote(); });
+
+      // Defaults
+      setInputs(PRESETS.fiat);
+      updateModeNote();
+      setStatus({ text: "Ready. Click refresh to load data.", level: "info" });
+    })();
+  </script>
+</body>
+
+</html>
