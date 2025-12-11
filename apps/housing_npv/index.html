@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>房产内在价值建模 (DCF + 土地残值)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --primary: #7c3aed; --bg: #f5f3ff; --card: #ffffff; --text: #1f2937; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
+        .container { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
+        
+        /* 左侧面板 */
+        .panel { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); height: fit-content; }
+        h2 { margin-top: 0; color: var(--primary); font-size: 1.1rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; margin-bottom: 15px; }
+        
+        .section-title { font-size: 0.85rem; font-weight: 800; color: #6d28d9; margin-top: 15px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+        
+        .input-group { margin-bottom: 10px; }
+        label { display: block; font-size: 0.8rem; font-weight: 600; color: #4b5563; margin-bottom: 4px; }
+        input { width: 100%; padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; font-size: 0.95rem; }
+        input:focus { outline: 2px solid var(--primary); border-color: transparent; }
+        .hint { font-size: 0.7rem; color: #9ca3af; margin-top: 2px; }
+
+        button { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; transition: 0.2s; }
+        button:hover { background: #6d28d9; }
+
+        /* 右侧结果 */
+        .results-area { display: flex; flex-direction: column; gap: 20px; }
+        
+        /* 估值大卡片 */
+        .valuation-card { background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%); color: white; padding: 25px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 15px -3px rgba(124, 58, 237, 0.3); }
+        .val-left h3 { margin: 0; font-weight: 400; opacity: 0.9; font-size: 0.9rem; }
+        .val-number { font-size: 2.2rem; font-weight: 800; margin: 5px 0 0 0; }
+        .val-right { text-align: right; }
+        .val-sub { font-size: 0.9rem; opacity: 0.8; }
+        .val-sub strong { font-size: 1.1rem; opacity: 1; }
+
+        .breakdown-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .mini-card { background: white; padding: 15px; border-radius: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; }
+        .mini-val { font-size: 1.2rem; font-weight: 700; color: var(--text); }
+        .mini-lbl { font-size: 0.8rem; color: #6b7280; }
+
+        /* 图表容器 */
+        .chart-box { background: white; padding: 20px; border-radius: 12px; height: 350px; border: 1px solid #e5e7eb; }
+
+        /* 详情表 */
+        .table-box { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #e5e7eb; max-height: 400px; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { background: #f3f4f6; position: sticky; top: 0; padding: 10px; text-align: right; color: #374151; z-index: 10; font-weight: 600; }
+        td { padding: 8px 10px; text-align: right; border-bottom: 1px solid #f9fafb; }
+        th:first-child, td:first-child { text-align: left; padding-left: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="panel">
+        <h2>🏗️ 估值参数建模</h2>
+        
+        <div class="section-title">基础假设</div>
+        <div class="input-group">
+            <label>当前市场挂牌价 (用于拆分基数)</label>
+            <input type="number" id="marketPrice" value="10000000">
+        </div>
+        <div class="input-group">
+            <label>土地价值占比 (%)</label>
+            <input type="number" id="landRatio" value="60">
+            <div class="hint">一二线城市土地通常占60%-80%</div>
+        </div>
+        <div class="input-group">
+            <label>持有/模拟年限 (年)</label>
+            <input type="number" id="years" value="30">
+        </div>
+        <div class="input-group">
+            <label>折现率/你的要求回报率 (%)</label>
+            <input type="number" id="discountRate" value="6.0" step="0.1">
+            <div class="hint">风险越高，此值应越高</div>
+        </div>
+
+        <div class="section-title">现金流输入 (年化)</div>
+        <div class="input-group">
+            <label>当前年租金</label>
+            <input type="number" id="rent" value="200000">
+        </div>
+        <div class="input-group">
+            <label>租金年增长率 (%)</label>
+            <input type="number" id="rentGrowth" value="2.0" step="0.1">
+        </div>
+        
+        <div class="section-title">支出与维护</div>
+        <div class="input-group">
+            <label>年维护/折旧/物业支出</label>
+            <input type="number" id="maintenance" value="30000">
+        </div>
+        <div class="input-group">
+            <label>年房产税</label>
+            <input type="number" id="tax" value="5000">
+        </div>
+        <div class="input-group">
+            <label>支出通胀率 (%)</label>
+            <input type="number" id="expenseInflation" value="3.0" step="0.1">
+        </div>
+
+        <div class="section-title">期末终值假设</div>
+        <div class="input-group">
+            <label>土地年均升值率 (%)</label>
+            <input type="number" id="landGrowth" value="3.0" step="0.1">
+        </div>
+        <div class="input-group">
+            <label>建筑物理年折旧率 (%)</label>
+            <input type="number" id="bldgDepreciation" value="2.0" step="0.1">
+            <div class="hint">建筑老化导致的价值损耗</div>
+        </div>
+
+        <button onclick="calculate()">🔮 计算内在价值</button>
+    </div>
+
+    <div class="results-area">
+        
+        <div class="valuation-card">
+            <div class="val-left">
+                <h3>模型计算内在价值 (NPV)</h3>
+                <div class="val-number" id="intrinsicValue">--</div>
+            </div>
+            <div class="val-right">
+                <div class="val-sub">对比市场价溢价率: <span id="premium">--</span></div>
+                <div class="val-sub" style="margin-top:5px;">建议: <span id="advice" style="font-weight:bold">--</span></div>
+            </div>
+        </div>
+
+        <div class="breakdown-grid">
+            <div class="mini-card">
+                <div class="mini-val" id="pvCashflow" style="color:#7c3aed">--</div>
+                <div class="mini-lbl">租金收益现值</div>
+            </div>
+            <div class="mini-card">
+                <div class="mini-val" id="pvLand" style="color:#059669">--</div>
+                <div class="mini-lbl">土地终值现值</div>
+            </div>
+            <div class="mini-card">
+                <div class="mini-val" id="pvBldg" style="color:#d97706">--</div>
+                <div class="mini-lbl">建筑残值现值</div>
+            </div>
+        </div>
+
+        <div class="chart-box">
+            <canvas id="cfChart"></canvas>
+        </div>
+
+        <div class="table-box">
+            <table id="detailsTable">
+                <thead>
+                    <tr>
+                        <th>年份</th>
+                        <th>净现金流(NOI)</th>
+                        <th>土地价值</th>
+                        <th>建筑价值</th>
+                        <th>总价值快照</th>
+                        <th>NOI折现因子</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    let myChart = null;
+
+    function fmt(num) {
+        return num.toLocaleString('zh-CN', { maximumFractionDigits: 0 });
+    }
+
+    function calculate() {
+        // --- 1. 获取输入 ---
+        const marketPrice = parseFloat(document.getElementById('marketPrice').value);
+        const landRatio = parseFloat(document.getElementById('landRatio').value) / 100;
+        const years = parseInt(document.getElementById('years').value);
+        const discountRate = parseFloat(document.getElementById('discountRate').value) / 100;
+
+        const rentStart = parseFloat(document.getElementById('rent').value);
+        const rentGrowth = parseFloat(document.getElementById('rentGrowth').value) / 100;
+        
+        const maintStart = parseFloat(document.getElementById('maintenance').value);
+        const taxStart = parseFloat(document.getElementById('tax').value);
+        const expInflation = parseFloat(document.getElementById('expenseInflation').value) / 100;
+
+        const landGrowth = parseFloat(document.getElementById('landGrowth').value) / 100;
+        const bldgDepr = parseFloat(document.getElementById('bldgDepreciation').value) / 100;
+
+        // --- 2. 初始拆分 ---
+        let initialLandVal = marketPrice * landRatio;
+        let initialBldgVal = marketPrice * (1 - landRatio);
+
+        // --- 3. 逐年计算 ---
+        let totalPVCashFlow = 0;
+        let currentRent = rentStart;
+        let currentMaint = maintStart;
+        let currentTax = taxStart;
+        
+        let chartLabels = [];
+        let chartNOI = [];
+        let chartAssetVal = [];
+
+        let tableHtml = '';
+
+        for (let t = 1; t <= years; t++) {
+            // A. 现金流部分
+            let expense = currentMaint + currentTax;
+            let noi = currentRent - expense;
+            
+            // 折现
+            let df = 1 / Math.pow(1 + discountRate, t);
+            let pv_noi = noi * df;
+            totalPVCashFlow += pv_noi;
+
+            // B. 资产价值快照 (用于展示，不做折现叠加，仅计算最后一年)
+            let landValT = initialLandVal * Math.pow(1 + landGrowth, t);
+            let bldgValT = initialBldgVal * Math.pow(1 - bldgDepr, t);
+            let totalAssetVal = landValT + bldgValT;
+
+            // 记录数据
+            chartLabels.push(t);
+            chartNOI.push(noi);
+            chartAssetVal.push(totalAssetVal);
+
+            tableHtml += `<tr>
+                <td>第 ${t} 年</td>
+                <td style="font-weight:bold">${fmt(noi)}</td>
+                <td style="color:#059669">${fmt(landValT)}</td>
+                <td style="color:#d97706">${fmt(bldgValT)}</td>
+                <td>${fmt(totalAssetVal)}</td>
+                <td style="color:#9ca3af">${df.toFixed(4)}</td>
+            </tr>`;
+
+            // 更新下一年的基础数据
+            currentRent *= (1 + rentGrowth);
+            currentMaint *= (1 + expInflation);
+            currentTax *= (1 + expInflation); // 假设税收也随通胀调整，也可以设为固定
+        }
+
+        // --- 4. 计算期末终值 (Terminal Value) 及其现值 ---
+        // 逻辑：在第N年卖出，得到的钱是当时的 土地值 + 建筑值
+        let finalLandVal = initialLandVal * Math.pow(1 + landGrowth, years);
+        let finalBldgVal = initialBldgVal * Math.pow(1 - bldgDepr, years);
+        
+        let pv_FinalLand = finalLandVal / Math.pow(1 + discountRate, years);
+        let pv_FinalBldg = finalBldgVal / Math.pow(1 + discountRate, years);
+
+        let intrinsicValue = totalPVCashFlow + pv_FinalLand + pv_FinalBldg;
+
+        // --- 5. 更新 UI ---
+        
+        // 核心数值
+        document.getElementById('intrinsicValue').innerText = fmt(intrinsicValue);
+        document.getElementById('pvCashflow').innerText = fmt(totalPVCashFlow);
+        document.getElementById('pvLand').innerText = fmt(pv_FinalLand);
+        document.getElementById('pvBldg').innerText = fmt(pv_FinalBldg);
+
+        // 表格
+        document.querySelector('#detailsTable tbody').innerHTML = tableHtml;
+
+        // 评价逻辑
+        let diff = (intrinsicValue - marketPrice) / marketPrice;
+        let adviceEl = document.getElementById('advice');
+        let premiumEl = document.getElementById('premium');
+        
+        premiumEl.innerText = (diff * 100).toFixed(1) + "%";
+        
+        if (diff > 0.1) {
+            adviceEl.innerText = "低估 (值得买入)";
+            adviceEl.style.color = "#059669";
+        } else if (diff < -0.1) {
+            adviceEl.innerText = "高估 (价格虚高)";
+            adviceEl.style.color = "#dc2626";
+        } else {
+            adviceEl.innerText = "价格合理";
+            adviceEl.style.color = "#d97706";
+        }
+
+        // --- 6. 绘图 (Chart.js) ---
+        renderChart(chartLabels, chartNOI, chartAssetVal);
+    }
+
+    function renderChart(labels, noiData, assetData) {
+        const ctx = document.getElementById('cfChart').getContext('2d');
+        if (myChart) myChart.destroy();
+
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: '预估房产总值 (右轴)',
+                        data: assetData,
+                        borderColor: '#7c3aed',
+                        backgroundColor: 'rgba(124, 58, 237, 0.1)',
+                        yAxisID: 'y_asset',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: '当年净现金流 NOI (左轴)',
+                        data: noiData,
+                        borderColor: '#059669',
+                        backgroundColor: '#059669',
+                        type: 'bar',
+                        yAxisID: 'y_flow'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    y_flow: { 
+                        type: 'linear', display: true, position: 'left', 
+                        title: {display:true, text:'年度净收入 (NOI)'},
+                        grid: { display: false }
+                    },
+                    y_asset: { 
+                        type: 'linear', display: true, position: 'right', 
+                        title: {display:true, text:'资产名义价值 (土地+建筑)'} 
+                    }
+                }
+            }
+        });
+    }
+
+    window.onload = calculate;
+</script>
+
+</body>
+</html>

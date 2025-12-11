@@ -126,9 +126,9 @@ MAIN_TEMPLATE = """\
 
 console.log("Hello from {title}!");
 
-export function init() {
+export function init() {{
   // Your app boot code here.
-}
+}}
 
 init();
 """
