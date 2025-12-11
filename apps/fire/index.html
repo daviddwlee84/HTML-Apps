@@ -1,217 +1,383 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FIRE 真实波动模拟器</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="模擬 FIRE（財務自由提早退休）計畫的真實市場波動情境，評估退休資金是否足以應對不同收益率變化。" />
+
+    <!-- Open Graph / Facebook / Discord -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://daviddwlee84.github.io/HTML-Apps/apps/fire/" />
+    <meta property="og:title" content="FIRE 真实波动模拟器" />
+    <meta property="og:description" content="模擬 FIRE（財務自由提早退休）計畫的真實市場波動情境，評估退休資金是否足以應對不同收益率變化。" />
+    <meta property="og:site_name" content="Mini Apps" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="FIRE 真实波动模拟器" />
+    <meta name="twitter:description" content="模擬 FIRE（財務自由提早退休）計畫的真實市場波動情境，評估退休資金是否足以應對不同收益率變化。" />
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --p: #3b82f6; --bg: #f3f4f6; --card: #fff; --text: #1f2937; }
-        body { font-family: sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
-        .app-container { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 300px 1fr; gap: 20px; }
-        
+        :root {
+            --p: #3b82f6;
+            --bg: #f3f4f6;
+            --card: #fff;
+            --text: #1f2937;
+        }
+
+        body {
+            font-family: sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 20px;
+            margin: 0;
+        }
+
+        .app-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+
         /* 左侧控制栏 */
-        .controls { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); height: fit-content; }
-        h2 { margin-top: 0; color: var(--p); font-size: 1.2rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; font-size: 0.85rem; font-weight: 600; color: #4b5563; margin-bottom: 5px; }
-        input { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
-        .hint { font-size: 0.75rem; color: #9ca3af; margin-top: 2px; }
-        button { width: 100%; background: var(--p); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 10px; }
-        button:hover { background: #2563eb; }
+        .controls {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--p);
+            font-size: 1.2rem;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #4b5563;
+            margin-bottom: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .hint {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            margin-top: 2px;
+        }
+
+        button {
+            width: 100%;
+            background: var(--p);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
 
         /* 右侧显示区 */
-        .display-area { display: flex; flex-direction: column; gap: 20px; }
-        
+        .display-area {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
         /* 概览卡片 */
-        .summary-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-        .card { background: var(--card); padding: 15px; border-radius: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .card-val { font-size: 1.4rem; font-weight: 800; color: var(--p); }
-        .card-lbl { font-size: 0.85rem; color: #6b7280; }
-        .success { color: #10b981; } .fail { color: #ef4444; }
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .card {
+            background: var(--card);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-val {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--p);
+        }
+
+        .card-lbl {
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+
+        .success {
+            color: #10b981;
+        }
+
+        .fail {
+            color: #ef4444;
+        }
 
         /* 图表区 */
-        .chart-box { background: var(--card); padding: 15px; border-radius: 12px; height: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        
-        /* 表格区 */
-        .table-box { background: var(--card); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-        th { background: #f9fafb; text-align: right; padding: 10px; font-weight: 600; color: #374151; position: sticky; top: 0; }
-        td { padding: 8px 10px; text-align: right; border-bottom: 1px solid #f3f4f6; }
-        th:first-child, td:first-child { text-align: center; }
-        tr:last-child td { border-bottom: none; }
-        .pos { color: #10b981; } .neg { color: #ef4444; }
+        .chart-box {
+            background: var(--card);
+            padding: 15px;
+            border-radius: 12px;
+            height: 400px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
 
-        @media (max-width: 768px) { .app-container { grid-template-columns: 1fr; } }
+        /* 表格区 */
+        .table-box {
+            background: var(--card);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: #f9fafb;
+            text-align: right;
+            padding: 10px;
+            font-weight: 600;
+            color: #374151;
+            position: sticky;
+            top: 0;
+        }
+
+        td {
+            padding: 8px 10px;
+            text-align: right;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        th:first-child,
+        td:first-child {
+            text-align: center;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .pos {
+            color: #10b981;
+        }
+
+        .neg {
+            color: #ef4444;
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
+
 <body>
 
-<div class="app-container">
-    <div class="controls">
-        <h2>📊 参数设置</h2>
-        
-        <div class="input-group">
-            <label>初始资金 (元)</label>
-            <input type="number" id="capital" value="3000000">
-        </div>
-        <div class="input-group">
-            <label>每年稳定收入 (元)</label>
-            <input type="number" id="income" value="0">
-        </div>
-        <div class="input-group">
-            <label>初始年消费 (元)</label>
-            <input type="number" id="expense" value="120000">
-        </div>
-        <div class="input-group">
-            <label>通货膨胀率 (%)</label>
-            <input type="number" id="cpi" value="3" step="0.1">
-        </div>
+    <div class="app-container">
+        <div class="controls">
+            <h2>📊 参数设置</h2>
 
-        <hr style="border:0; border-top:1px solid #eee; margin: 15px 0;">
-        
-        <div class="input-group">
-            <label>模拟总年数</label>
-            <input type="number" id="years" value="40">
-        </div>
-        <div class="input-group">
-            <label>10年平均年化 (%)</label>
-            <input type="number" id="avgRate" value="10" step="0.1">
-            <div class="hint">每10年的平均收益锁定为此值</div>
-        </div>
-        <div class="input-group">
-            <label>单年波动范围 (%)</label>
-            <div style="display:flex; gap:5px;">
-                <input type="number" id="minRate" value="-30" placeholder="最低">
-                <input type="number" id="maxRate" value="50" placeholder="最高">
+            <div class="input-group">
+                <label>初始资金 (元)</label>
+                <input type="number" id="capital" value="3000000">
             </div>
-            <div class="hint">收益率将在最低和最高之间随机波动</div>
+            <div class="input-group">
+                <label>每年稳定收入 (元)</label>
+                <input type="number" id="income" value="0">
+            </div>
+            <div class="input-group">
+                <label>初始年消费 (元)</label>
+                <input type="number" id="expense" value="120000">
+            </div>
+            <div class="input-group">
+                <label>通货膨胀率 (%)</label>
+                <input type="number" id="cpi" value="3" step="0.1">
+            </div>
+
+            <hr style="border:0; border-top:1px solid #eee; margin: 15px 0;">
+
+            <div class="input-group">
+                <label>模拟总年数</label>
+                <input type="number" id="years" value="40">
+            </div>
+            <div class="input-group">
+                <label>10年平均年化 (%)</label>
+                <input type="number" id="avgRate" value="10" step="0.1">
+                <div class="hint">每10年的平均收益锁定为此值</div>
+            </div>
+            <div class="input-group">
+                <label>单年波动范围 (%)</label>
+                <div style="display:flex; gap:5px;">
+                    <input type="number" id="minRate" value="-30" placeholder="最低">
+                    <input type="number" id="maxRate" value="50" placeholder="最高">
+                </div>
+                <div class="hint">收益率将在最低和最高之间随机波动</div>
+            </div>
+
+            <button onclick="simulate()">🔄 开始模拟</button>
         </div>
 
-        <button onclick="simulate()">🔄 开始模拟</button>
+        <div class="display-area">
+            <div class="summary-cards">
+                <div class="card">
+                    <div class="card-val" id="res-status">--</div>
+                    <div class="card-lbl">最终状态</div>
+                </div>
+                <div class="card">
+                    <div class="card-val" id="res-asset">--</div>
+                    <div class="card-lbl">期末/破产时资产</div>
+                </div>
+                <div class="card">
+                    <div class="card-val" id="res-years">--</div>
+                    <div class="card-lbl">资金维持年数</div>
+                </div>
+            </div>
+
+            <div class="chart-box">
+                <canvas id="mainChart"></canvas>
+            </div>
+
+            <div class="table-box">
+                <div style="max-height: 400px; overflow-y: auto;">
+                    <table id="detailsTable">
+                        <thead>
+                            <tr>
+                                <th>年份</th>
+                                <th>收益率</th>
+                                <th>年初资产</th>
+                                <th>- 支出</th>
+                                <th>+ 收入</th>
+                                <th>+/- 投资盈亏</th>
+                                <th>= 年末资产</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="display-area">
-        <div class="summary-cards">
-            <div class="card">
-                <div class="card-val" id="res-status">--</div>
-                <div class="card-lbl">最终状态</div>
-            </div>
-            <div class="card">
-                <div class="card-val" id="res-asset">--</div>
-                <div class="card-lbl">期末/破产时资产</div>
-            </div>
-            <div class="card">
-                <div class="card-val" id="res-years">--</div>
-                <div class="card-lbl">资金维持年数</div>
-            </div>
-        </div>
+    <script>
+        let chartInstance = null;
 
-        <div class="chart-box">
-            <canvas id="mainChart"></canvas>
-        </div>
+        // 核心算法：生成一段平均值为 target 的随机波动数组
+        function getVolatileBlock(count, targetAvg, min, max) {
+            let rates = [];
+            // 1. 初始随机
+            for (let i = 0; i < count; i++) rates.push(Math.random() * (max - min) + min);
 
-        <div class="table-box">
-            <div style="max-height: 400px; overflow-y: auto;">
-                <table id="detailsTable">
-                    <thead>
-                        <tr>
-                            <th>年份</th>
-                            <th>收益率</th>
-                            <th>年初资产</th>
-                            <th>- 支出</th>
-                            <th>+ 收入</th>
-                            <th>+/- 投资盈亏</th>
-                            <th>= 年末资产</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
+            // 2. 迭代修正以匹配均值
+            for (let iter = 0; iter < 20; iter++) {
+                let currentAvg = rates.reduce((a, b) => a + b, 0) / count;
+                let diff = targetAvg - currentAvg;
+                if (Math.abs(diff) < 0.0001) break;
 
-<script>
-    let chartInstance = null;
+                rates = rates.map(r => {
+                    let newVal = r + diff;
+                    return Math.max(min, Math.min(max, newVal)); // 钳位
+                });
+            }
 
-    // 核心算法：生成一段平均值为 target 的随机波动数组
-    function getVolatileBlock(count, targetAvg, min, max) {
-        let rates = [];
-        // 1. 初始随机
-        for(let i=0; i<count; i++) rates.push(Math.random() * (max - min) + min);
-        
-        // 2. 迭代修正以匹配均值
-        for(let iter=0; iter<20; iter++) {
-            let currentAvg = rates.reduce((a,b)=>a+b, 0) / count;
-            let diff = targetAvg - currentAvg;
-            if(Math.abs(diff) < 0.0001) break;
-            
-            rates = rates.map(r => {
-                let newVal = r + diff;
-                return Math.max(min, Math.min(max, newVal)); // 钳位
-            });
-        }
-        
-        // 3. 洗牌 (让大涨大跌随机分布)
-        for (let i = rates.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [rates[i], rates[j]] = [rates[j], rates[i]];
-        }
-        return rates;
-    }
-
-    function simulate() {
-        // 获取输入
-        const cap0 = +document.getElementById('capital').value;
-        const inc = +document.getElementById('income').value;
-        const exp0 = +document.getElementById('expense').value;
-        const cpi = +document.getElementById('cpi').value / 100;
-        const years = +document.getElementById('years').value;
-        const avgR = +document.getElementById('avgRate').value / 100;
-        const minR = +document.getElementById('minRate').value / 100;
-        const maxR = +document.getElementById('maxRate').value / 100;
-
-        // 生成收益率序列
-        let rates = [];
-        const blocks = Math.ceil(years / 10);
-        for(let i=0; i<blocks; i++) {
-            let count = (i === blocks-1) ? (years - i*10) : 10;
-            if(count > 0) rates = rates.concat(getVolatileBlock(count, avgR, minR, maxR));
+            // 3. 洗牌 (让大涨大跌随机分布)
+            for (let i = rates.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [rates[i], rates[j]] = [rates[j], rates[i]];
+            }
+            return rates;
         }
 
-        // 模拟计算
-        let data = [];
-        let curCap = cap0;
-        let curExp = exp0;
-        let brokenYear = null;
+        function simulate() {
+            // 获取输入
+            const cap0 = +document.getElementById('capital').value;
+            const inc = +document.getElementById('income').value;
+            const exp0 = +document.getElementById('expense').value;
+            const cpi = +document.getElementById('cpi').value / 100;
+            const years = +document.getElementById('years').value;
+            const avgR = +document.getElementById('avgRate').value / 100;
+            const minR = +document.getElementById('minRate').value / 100;
+            const maxR = +document.getElementById('maxRate').value / 100;
 
-        let tableHtml = '';
+            // 生成收益率序列
+            let rates = [];
+            const blocks = Math.ceil(years / 10);
+            for (let i = 0; i < blocks; i++) {
+                let count = (i === blocks - 1) ? (years - i * 10) : 10;
+                if (count > 0) rates = rates.concat(getVolatileBlock(count, avgR, minR, maxR));
+            }
 
-        for(let i=0; i<years; i++) {
-            let r = rates[i];
-            let startCap = curCap;
-            
-            // 消费通胀（第1年不通胀）
-            if(i > 0) curExp *= (1 + cpi);
+            // 模拟计算
+            let data = [];
+            let curCap = cap0;
+            let curExp = exp0;
+            let brokenYear = null;
 
-            // 核心公式：先算投资盈亏，再收支
-            let profit = startCap * r;
-            let endCap = startCap + profit + inc - curExp;
+            let tableHtml = '';
 
-            // 记录数据
-            data.push({
-                year: i+1,
-                rate: r,
-                assets: endCap
-            });
+            for (let i = 0; i < years; i++) {
+                let r = rates[i];
+                let startCap = curCap;
 
-            // 表格行
-            let rClass = r >= 0 ? 'pos' : 'neg';
-            let capClass = endCap >= 0 ? '' : 'neg';
-            tableHtml += `<tr>
-                <td>${i+1}</td>
-                <td class="${rClass}">${(r*100).toFixed(2)}%</td>
+                // 消费通胀（第1年不通胀）
+                if (i > 0) curExp *= (1 + cpi);
+
+                // 核心公式：先算投资盈亏，再收支
+                let profit = startCap * r;
+                let endCap = startCap + profit + inc - curExp;
+
+                // 记录数据
+                data.push({
+                    year: i + 1,
+                    rate: r,
+                    assets: endCap
+                });
+
+                // 表格行
+                let rClass = r >= 0 ? 'pos' : 'neg';
+                let capClass = endCap >= 0 ? '' : 'neg';
+                tableHtml += `<tr>
+                <td>${i + 1}</td>
+                <td class="${rClass}">${(r * 100).toFixed(2)}%</td>
                 <td>${Math.round(startCap).toLocaleString()}</td>
                 <td>${Math.round(curExp).toLocaleString()}</td>
                 <td>${Math.round(inc).toLocaleString()}</td>
@@ -219,71 +385,72 @@
                 <td class="${capClass}" style="font-weight:bold">${Math.round(endCap).toLocaleString()}</td>
             </tr>`;
 
-            curCap = endCap;
-            if(curCap < 0 && brokenYear === null) brokenYear = i+1;
-        }
-
-        // 更新 UI
-        document.querySelector('#detailsTable tbody').innerHTML = tableHtml;
-
-        // 概览卡片
-        const statusEl = document.getElementById('res-status');
-        if (brokenYear) {
-            statusEl.innerText = "破产";
-            statusEl.className = "card-val fail";
-            document.getElementById('res-years').innerText = brokenYear + " 年";
-        } else {
-            statusEl.innerText = "成功";
-            statusEl.className = "card-val success";
-            document.getElementById('res-years').innerText = "> " + years + " 年";
-        }
-        document.getElementById('res-asset').innerText = Math.round(curCap).toLocaleString();
-
-        // 绘图
-        drawChart(data);
-    }
-
-    function drawChart(data) {
-        const ctx = document.getElementById('mainChart').getContext('2d');
-        if(chartInstance) chartInstance.destroy();
-
-        chartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: data.map(d => d.year),
-                datasets: [
-                    {
-                        type: 'line',
-                        label: '资产曲线',
-                        data: data.map(d => d.assets),
-                        borderColor: '#3b82f6',
-                        borderWidth: 2,
-                        yAxisID: 'y',
-                        tension: 0.3,
-                        pointRadius: 1
-                    },
-                    {
-                        type: 'bar',
-                        label: '当年涨跌幅%',
-                        data: data.map(d => d.rate * 100),
-                        backgroundColor: data.map(d => d.rate >= 0 ? 'rgba(16, 185, 129, 0.5)' : 'rgba(239, 68, 68, 0.5)'),
-                        yAxisID: 'y1'
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { position: 'left', title: {display:true, text:'资产 (元)'} },
-                    y1: { position: 'right', grid: {drawOnChartArea:false}, title: {display:true, text:'收益率 (%)'} }
-                }
+                curCap = endCap;
+                if (curCap < 0 && brokenYear === null) brokenYear = i + 1;
             }
-        });
-    }
 
-    // 自动运行一次
-    window.onload = simulate;
-</script>
+            // 更新 UI
+            document.querySelector('#detailsTable tbody').innerHTML = tableHtml;
+
+            // 概览卡片
+            const statusEl = document.getElementById('res-status');
+            if (brokenYear) {
+                statusEl.innerText = "破产";
+                statusEl.className = "card-val fail";
+                document.getElementById('res-years').innerText = brokenYear + " 年";
+            } else {
+                statusEl.innerText = "成功";
+                statusEl.className = "card-val success";
+                document.getElementById('res-years').innerText = "> " + years + " 年";
+            }
+            document.getElementById('res-asset').innerText = Math.round(curCap).toLocaleString();
+
+            // 绘图
+            drawChart(data);
+        }
+
+        function drawChart(data) {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.year),
+                    datasets: [
+                        {
+                            type: 'line',
+                            label: '资产曲线',
+                            data: data.map(d => d.assets),
+                            borderColor: '#3b82f6',
+                            borderWidth: 2,
+                            yAxisID: 'y',
+                            tension: 0.3,
+                            pointRadius: 1
+                        },
+                        {
+                            type: 'bar',
+                            label: '当年涨跌幅%',
+                            data: data.map(d => d.rate * 100),
+                            backgroundColor: data.map(d => d.rate >= 0 ? 'rgba(16, 185, 129, 0.5)' : 'rgba(239, 68, 68, 0.5)'),
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { position: 'left', title: { display: true, text: '资产 (元)' } },
+                        y1: { position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: '收益率 (%)' } }
+                    }
+                }
+            });
+        }
+
+        // 自动运行一次
+        window.onload = simulate;
+    </script>
 </body>
+
 </html>

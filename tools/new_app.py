@@ -35,6 +35,22 @@ INDEX_TEMPLATE = """<!doctype html>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{title}</title>
+
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="{title} - A lightweight single-page HTML app." />
+
+  <!-- Open Graph / Facebook / Discord -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://daviddwlee84.github.io/HTML-Apps/apps/{folder}/" />
+  <meta property="og:title" content="{title}" />
+  <meta property="og:description" content="{title} - A lightweight single-page HTML app." />
+  <meta property="og:site_name" content="Mini Apps" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="{title}" />
+  <meta name="twitter:description" content="{title} - A lightweight single-page HTML app." />
+
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
@@ -159,7 +175,7 @@ def scaffold(name: str, with_css: bool, with_js: bool) -> Path:
 
     title = to_title(name)
     (app_dir / "index.html").write_text(
-        INDEX_TEMPLATE.format(title=title), encoding="utf-8"
+        INDEX_TEMPLATE.format(title=title, folder=name), encoding="utf-8"
     )
 
     if with_css:
