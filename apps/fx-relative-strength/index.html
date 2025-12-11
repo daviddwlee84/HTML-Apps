@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FX Relative Strength History</title>
+  <meta name="description"
+    content="Visualize historical relative strength of assets using Rebased Charts, Heatmaps, and Bump Charts." />
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title-group">
+        <h1>FX Relative Strength History</h1>
+        <p>
+          Compare historical performance of multiple assets.
+          Visualize cumulative returns, relative strength, regimes, and rankings over time.
+        </p>
+      </div>
+      <div class="controls">
+        <button id="btnMock">Generate Mock Data</button>
+        <!-- Future: Add CSV Upload button here -->
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- 1. Rebased Line Chart -->
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Rebased Performance (Index = 100)</div>
+            <div class="card-desc">Cumulative return comparison normalized to start date.</div>
+          </div>
+        </div>
+        <div id="chart-rebased" class="chart-container"></div>
+      </div>
+
+      <!-- 2. Relative Performance -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Relative Strength vs Base</div>
+            <div class="card-desc">Performance relative to <span id="base-asset-name">Asset A</span>. Positive =
+              Outperforming.</div>
+          </div>
+        </div>
+        <div id="chart-relative" class="chart-container"></div>
+      </div>
+
+      <!-- 3. Performance Heatmap -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Monthly Return Heatmap</div>
+            <div class="card-desc">Color intensity shows monthly % return. Useful for spotting regimes.</div>
+          </div>
+        </div>
+        <div id="chart-heatmap" class="chart-container"></div>
+      </div>
+
+      <!-- 4. Bump Chart (Rankings) -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Rank Evolution (Bump Chart)</div>
+            <div class="card-desc">Weekly ranking based on cumulative return. Top = Rank 1.</div>
+          </div>
+        </div>
+        <div id="chart-bump" class="chart-container"></div>
+      </div>
+
+      <!-- 5. Rolling Z-Score -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Rolling Z-Score (20-day)</div>
+            <div class="card-desc">Standardized deviation from mean. >2 = Overextended, <-2=Oversold.</div>
+            </div>
+          </div>
+          <div id="chart-zscore" class="chart-container"></div>
+        </div>
+
+        <!-- 6. Ternary Plot -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Relative Dominance (Ternary)</div>
+              <div class="card-desc">Share of total "strength" among 3 assets.</div>
+            </div>
+          </div>
+          <div id="chart-ternary" class="chart-container"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+
+</html>
