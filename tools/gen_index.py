@@ -96,6 +96,27 @@ def render_index(apps: list[dict]) -> str:
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Mini Apps</title>
+
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="A collection of lightweight single-page HTML apps hosted on GitHub Pages. Explore tools for housing calculations, financial planning, and more." />
+  <meta name="author" content="daviddwlee84" />
+
+  <!-- Open Graph / Facebook / Discord -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://daviddwlee84.github.io/HTML-Apps/" />
+  <meta property="og:title" content="Mini Apps" />
+  <meta property="og:description" content="A collection of lightweight single-page HTML apps hosted on GitHub Pages. Explore tools for housing calculations, financial planning, and more." />
+  <meta property="og:site_name" content="Mini Apps" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:url" content="https://daviddwlee84.github.io/HTML-Apps/" />
+  <meta name="twitter:title" content="Mini Apps" />
+  <meta name="twitter:description" content="A collection of lightweight single-page HTML apps hosted on GitHub Pages. Explore tools for housing calculations, financial planning, and more." />
+
+  <!-- Theme Color for browser UI -->
+  <meta name="theme-color" content="#111827" />
+
   <style>
     :root {{
       --bg: #ffffff;
