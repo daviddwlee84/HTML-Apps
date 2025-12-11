@@ -1,30 +1,26 @@
 <!doctype html>
 <html lang="en">
-
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Mini Apps</title>
 
   <!-- SEO Meta Tags -->
-  <meta name="description"
-    content="A collection of lightweight single-page HTML apps hosted on GitHub Pages. Explore tools for housing calculations, financial planning, and more." />
+  <meta name="description" content="A collection of lightweight single-page HTML apps hosted on GitHub Pages. Explore tools for housing calculations, financial planning, and more." />
   <meta name="author" content="daviddwlee84" />
 
   <!-- Open Graph / Facebook / Discord -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://daviddwlee84.github.io/HTML-Apps/" />
   <meta property="og:title" content="Mini Apps" />
-  <meta property="og:description"
-    content="A collection of lightweight single-page HTML apps hosted on GitHub Pages. Explore tools for housing calculations, financial planning, and more." />
+  <meta property="og:description" content="A collection of lightweight single-page HTML apps hosted on GitHub Pages. Explore tools for housing calculations, financial planning, and more." />
   <meta property="og:site_name" content="Mini Apps" />
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:url" content="https://daviddwlee84.github.io/HTML-Apps/" />
   <meta name="twitter:title" content="Mini Apps" />
-  <meta name="twitter:description"
-    content="A collection of lightweight single-page HTML apps hosted on GitHub Pages. Explore tools for housing calculations, financial planning, and more." />
+  <meta name="twitter:description" content="A collection of lightweight single-page HTML apps hosted on GitHub Pages. Explore tools for housing calculations, financial planning, and more." />
 
   <!-- Theme Color for browser UI -->
   <meta name="theme-color" content="#111827" />
@@ -37,15 +33,12 @@
       --border: #e5e7eb;
       --hover: #f8fafc;
       --accent: #111827;
-      --shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+      --shadow: 0 6px 20px rgba(0,0,0,0.06);
       --radius: 14px;
       --input-bg: #ffffff;
     }
 
-    * {
-      box-sizing: border-box;
-    }
-
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       background: var(--bg);
@@ -110,7 +103,7 @@
 
     .search input:focus {
       border-color: #cbd5e1;
-      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 0 0 3px rgba(0,0,0,0.04);
     }
 
     .search .count {
@@ -126,36 +119,21 @@
       font-size: 13px;
       color: var(--muted);
     }
-
-    .view-toggle label {
-      cursor: pointer;
-      user-select: none;
-    }
-
+    .view-toggle label { cursor: pointer; user-select: none; }
     .toggle-switch {
       position: relative;
       width: 44px;
       height: 24px;
     }
-
-    .toggle-switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
     .toggle-slider {
       position: absolute;
       cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      top: 0; left: 0; right: 0; bottom: 0;
       background-color: #e5e7eb;
       transition: 0.2s;
       border-radius: 24px;
     }
-
     .toggle-slider:before {
       position: absolute;
       content: "";
@@ -166,38 +144,22 @@
       background-color: white;
       transition: 0.2s;
       border-radius: 50%;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
     }
-
-    .toggle-switch input:checked+.toggle-slider {
-      background-color: var(--accent);
-    }
-
-    .toggle-switch input:checked+.toggle-slider:before {
-      transform: translateX(20px);
-    }
-
-    .toggle-switch input:focus+.toggle-slider {
-      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
-    }
+    .toggle-switch input:checked + .toggle-slider { background-color: var(--accent); }
+    .toggle-switch input:checked + .toggle-slider:before { transform: translateX(20px); }
+    .toggle-switch input:focus + .toggle-slider { box-shadow: 0 0 0 2px rgba(0,0,0,0.1); }
 
     /* Framed Mode - Navbar + iframe */
     .frame-container {
       display: none;
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      top: 0; left: 0; right: 0; bottom: 0;
       z-index: 1000;
       flex-direction: column;
       background: var(--bg);
     }
-
-    .frame-container.active {
-      display: flex;
-    }
-
+    .frame-container.active { display: flex; }
     .frame-navbar {
       display: flex;
       align-items: center;
@@ -207,16 +169,15 @@
       color: #fff;
       font-size: 14px;
       flex-shrink: 0;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
-
     .frame-navbar .nav-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
       padding: 6px 12px;
-      background: rgba(255, 255, 255, 0.15);
+      background: rgba(255,255,255,0.15);
       border: none;
       border-radius: 6px;
       color: #fff;
@@ -225,11 +186,7 @@
       transition: background 0.15s;
       text-decoration: none;
     }
-
-    .frame-navbar .nav-btn:hover {
-      background: rgba(255, 255, 255, 0.25);
-    }
-
+    .frame-navbar .nav-btn:hover { background: rgba(255,255,255,0.25); }
     .frame-navbar .nav-title {
       flex: 1;
       font-weight: 600;
@@ -237,13 +194,11 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-
     .frame-navbar .nav-path {
       font-size: 12px;
       opacity: 0.7;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
-
     .app-iframe {
       flex: 1;
       border: none;
@@ -304,14 +259,12 @@
       color: var(--muted);
       background: #fafafa;
     }
-
     .empty-title {
       font-size: 16px;
       font-weight: 600;
       color: var(--fg);
       margin-bottom: 6px;
     }
-
     .empty-sub code {
       background: #fff;
       border: 1px solid var(--border);
@@ -336,27 +289,21 @@
     }
   </style>
 </head>
-
 <body>
   <!-- Frame container for "Framed" mode -->
   <div class="frame-container" id="frameContainer">
     <nav class="frame-navbar">
       <button class="nav-btn" id="navHome" title="Back to Home">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-          stroke-linejoin="round">
-          <path d="M3 9l5-6 5 6" />
-          <path d="M4 8v7h8V8" />
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l5-6 5 6"/><path d="M4 8v7h8V8"/>
         </svg>
         Home
       </button>
       <div class="nav-title" id="navTitle">App Name</div>
       <span class="nav-path" id="navPath">apps/example/</span>
       <a class="nav-btn" id="navOpen" href="#" target="_blank" title="Open in new tab">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-          stroke-linejoin="round">
-          <path d="M7 2H2v10h10V7" />
-          <path d="M9 1h4v4" />
-          <path d="M13 1L6 8" />
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 2H2v10h10V7"/><path d="M9 1h4v4"/><path d="M13 1L6 8"/>
         </svg>
         Open
       </a>
@@ -371,7 +318,7 @@
           <h1 class="title">Mini Apps</h1>
           <div class="subtitle">Multiple single-page HTML apps hosted under one GitHub Pages site.</div>
         </div>
-        <div class="meta">Generated: 2025-12-11 14:50:22</div>
+        <div class="meta">Generated: 2025-12-11 18:33:43</div>
       </div>
 
       <div class="search">
@@ -386,36 +333,36 @@
           <span class="toggle-slider"></span>
         </label>
         <span>Framed</span>
-        <span style="margin-left: 4px; font-size: 11px; opacity: 0.7;"
-          title="Framed mode keeps a navigation bar visible so you can easily return home">(ℹ️)</span>
+        <span style="margin-left: 4px; font-size: 11px; opacity: 0.7;" title="Framed mode keeps a navigation bar visible so you can easily return home">(ℹ️)</span>
       </div>
     </header>
 
     <main>
       <div class="grid" id="grid">
-        <a class="card" href="./apps/christmas_particle/"
-          data-search="christmas particle apps/christmas_particle/ christmas_particle">
-          <div class="card-title">Christmas Particle</div>
-          <div class="card-sub">apps/christmas_particle/</div>
-        </a>
-        <a class="card" href="./apps/fire/" data-search="fire apps/fire/ fire">
-          <div class="card-title">Fire</div>
-          <div class="card-sub">apps/fire/</div>
-        </a>
-        <a class="card" href="./apps/housing_npv/" data-search="housing npv apps/housing_npv/ housing_npv">
-          <div class="card-title">Housing Npv</div>
-          <div class="card-sub">apps/housing_npv/</div>
-        </a>
-        <a class="card" href="./apps/housing_price_calculation/"
-          data-search="housing price calculation apps/housing_price_calculation/ housing_price_calculation">
-          <div class="card-title">Housing Price Calculation</div>
-          <div class="card-sub">apps/housing_price_calculation/</div>
-        </a>
-        <a class="card" href="./apps/triangular_arbitrage/"
-          data-search="triangular arbitrage apps/triangular_arbitrage/ triangular_arbitrage">
-          <div class="card-title">Triangular Arbitrage</div>
-          <div class="card-sub">apps/triangular_arbitrage/</div>
-        </a>
+        <a class="card" href="./apps/christmas_particle/" data-search="christmas particle apps/christmas_particle/ christmas_particle">
+                  <div class="card-title">Christmas Particle</div>
+                  <div class="card-sub">apps/christmas_particle/</div>
+                </a>
+<a class="card" href="./apps/fire/" data-search="fire apps/fire/ fire">
+                  <div class="card-title">Fire</div>
+                  <div class="card-sub">apps/fire/</div>
+                </a>
+<a class="card" href="./apps/fx-relative-strength/" data-search="fx relative strength apps/fx-relative-strength/ fx-relative-strength">
+                  <div class="card-title">Fx Relative Strength</div>
+                  <div class="card-sub">apps/fx-relative-strength/</div>
+                </a>
+<a class="card" href="./apps/housing_npv/" data-search="housing npv apps/housing_npv/ housing_npv">
+                  <div class="card-title">Housing Npv</div>
+                  <div class="card-sub">apps/housing_npv/</div>
+                </a>
+<a class="card" href="./apps/housing_price_calculation/" data-search="housing price calculation apps/housing_price_calculation/ housing_price_calculation">
+                  <div class="card-title">Housing Price Calculation</div>
+                  <div class="card-sub">apps/housing_price_calculation/</div>
+                </a>
+<a class="card" href="./apps/triangular_arbitrage/" data-search="triangular arbitrage apps/triangular_arbitrage/ triangular_arbitrage">
+                  <div class="card-title">Triangular Arbitrage</div>
+                  <div class="card-sub">apps/triangular_arbitrage/</div>
+                </a>
       </div>
       <div class="no-match" id="nomatch">
         No matching apps. Try a different keyword.
@@ -425,8 +372,7 @@
     <footer>
       <div>Rules: apps live in <code>apps/&lt;app-name&gt;/index.html</code>, use relative asset paths only.</div>
       <div>Local dev: <code>python -m http.server 8000</code></div>
-      <div>Generator: <code>python tools/gen_index.py</code> | Scaffold:
-        <code>python tools/new_app.py &lt;name&gt; --update-index</code></div>
+      <div>Generator: <code>python tools/gen_index.py</code> | Scaffold: <code>python tools/new_app.py &lt;name&gt; --update-index</code></div>
     </footer>
   </div>
 
@@ -509,14 +455,14 @@
       }
 
       // Home button click
-      navHome.addEventListener("click", function (e) {
+      navHome.addEventListener("click", function(e) {
         e.preventDefault();
         closeFrame();
       });
 
       // Handle card clicks
       for (const card of cards) {
-        card.addEventListener("click", function (e) {
+        card.addEventListener("click", function(e) {
           if (isFramedMode()) {
             e.preventDefault();
             const href = card.getAttribute("href");
@@ -529,14 +475,14 @@
       }
 
       // ESC key to close frame
-      document.addEventListener("keydown", function (e) {
+      document.addEventListener("keydown", function(e) {
         if (e.key === "Escape" && frameContainer.classList.contains("active")) {
           closeFrame();
         }
       });
 
       // Handle browser back button when frame is open
-      window.addEventListener("popstate", function () {
+      window.addEventListener("popstate", function() {
         if (frameContainer.classList.contains("active")) {
           closeFrame();
         }
@@ -544,5 +490,4 @@
     })();
   </script>
 </body>
-
 </html>

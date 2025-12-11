@@ -46,10 +46,8 @@ header {
   padding: 24px;
   box-shadow: var(--shadow);
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 16px;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .title-group h1 {
@@ -67,10 +65,43 @@ header {
   max-width: 600px;
 }
 
-.controls {
+/* Config Panel */
+.config-panel {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   flex-wrap: wrap;
+  align-items: flex-end;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.control-group label {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+input, select {
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  min-width: 140px;
+  transition: all 0.2s;
+}
+
+input:focus, select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(139, 233, 253, 0.15);
 }
 
 button {
@@ -78,12 +109,14 @@ button {
   color: #0b0f1f;
   border: none;
   border-radius: 10px;
-  padding: 10px 16px;
+  padding: 10px 20px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(33, 212, 253, 0.25);
   transition: transform 120ms ease, box-shadow 120ms ease;
+  height: 40px;
+  white-space: nowrap;
 }
 
 button:hover {
@@ -95,14 +128,39 @@ button:active {
   transform: translateY(0);
 }
 
-button.secondary {
-  background: var(--input-bg);
-  color: var(--text);
-  border: 1px solid var(--border);
-  box-shadow: none;
+.status-bar {
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-button.secondary:hover {
-  border-color: var(--accent);
+
+.status-bar::before {
+  content: '';
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success);
+}
+
+.status-bar.loading::before {
+  background: var(--warn);
+  box-shadow: 0 0 8px var(--warn);
+  animation: pulse 1s infinite;
+}
+
+.status-bar.error::before {
+  background: var(--danger);
+  box-shadow: 0 0 8px var(--danger);
+}
+
+@keyframes pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
 }
 
 .grid {
