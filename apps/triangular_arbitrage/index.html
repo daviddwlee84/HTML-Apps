@@ -216,7 +216,9 @@
 
     .edge-label {
       fill: var(--muted);
-      font-size: 12px;
+      font-size: 11px;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+      pointer-events: none;
     }
 
     .matrix-table {
@@ -328,7 +330,7 @@
         <label>
           Asset type
           <select id="assetType">
-            <option value="fiat">Fiat (exchangerate.host mid)</option>
+            <option value="fiat">Fiat (open.er-api mid)</option>
             <option value="crypto">Crypto (Binance bookTicker)</option>
           </select>
         </label>
@@ -360,8 +362,8 @@
           <input id="assetC" placeholder="e.g., CNY or ETH" />
         </label>
       </div>
-      <div class="note" id="modeNote">Fiat uses mid/last rates only. Bid/ask available for crypto pairs when Binance
-        provides them.</div>
+      <div class="note" id="modeNote">Fiat uses mid/last rates only (open.er-api, USD base). Bid/ask available for
+        crypto pairs when Binance provides them.</div>
     </header>
 
     <div class="grid">
@@ -403,6 +405,7 @@
       <div class="chips">
         <span class="chip" id="sourceChip">Source: —</span>
         <span class="chip" id="updatedChip">Updated: —</span>
+        <span class="chip" id="arbChip">Arb: —</span>
         <span class="chip" id="errorChip"
           style="display:none; border-color: rgba(248,113,113,0.5); color: var(--danger);">Error: —</span>
       </div>
@@ -429,6 +432,7 @@
         sourceChip: document.getElementById("sourceChip"),
         updatedChip: document.getElementById("updatedChip"),
         errorChip: document.getElementById("errorChip"),
+        arbChip: document.getElementById("arbChip"),
         modeNote: document.getElementById("modeNote"),
         triangleNodes: document.getElementById("triangleNodes"),
         triangleEdges: document.getElementById("triangleEdges"),
@@ -465,6 +469,56 @@
         const light = 18 + (1 - intensity) * 18;
         const sat = 65;
         return `hsl(${hue}deg ${sat}% ${light}%)`;
+      }
+
+      function computeArbitrage(assets, matrix) {
+        const cycles = [
+          [0, 1, 2, 0],
+          [0, 2, 1, 0],
+          [1, 0, 2, 1],
+          [1, 2, 0, 1],
+          [2, 0, 1, 2],
+          [2, 1, 0, 2],
+        ];
+        let best = null;
+        for (const cyc of cycles) {
+          let gain = 1;
+          let valid = true;
+          for (let i = 0; i < cyc.length - 1; i++) {
+            const r = matrix[cyc[i]][cyc[i + 1]];
+            if (r === null || r === undefined || Number.isNaN(r)) {
+              valid = false;
+              break;
+            }
+            gain *= r;
+          }
+          if (!valid) continue;
+          if (!best || gain > best.gain) {
+            best = { gain, path: cyc.map(i => assets[i]) };
+          }
+        }
+        return best;
+      }
+
+      function updateArbChip(assets, matrix) {
+        const chip = el.arbChip;
+        const best = computeArbitrage(assets, matrix);
+        if (!best) {
+          chip.textContent = "Arb: unavailable (missing rates)";
+          chip.style.color = "var(--muted)";
+          chip.style.borderColor = "var(--border)";
+          return;
+        }
+        const pct = (best.gain - 1) * 100;
+        if (best.gain > 1.001) {
+          chip.textContent = `Arb: ${best.path.join(" → ")} (~+${pct.toFixed(2)}%)`;
+          chip.style.color = "var(--success)";
+          chip.style.borderColor = "rgba(52, 211, 153, 0.6)";
+        } else {
+          chip.textContent = "Arb: none detected (≤0.1%)";
+          chip.style.color = "var(--muted)";
+          chip.style.borderColor = "var(--border)";
+        }
       }
 
       function setStatus({ text, level = "info" }) {
@@ -599,40 +653,53 @@
 
           const midX = (x1 + x2) / 2;
           const midY = (y1 + y2) / 2;
+          const dx = x2 - x1;
+          const dy = y2 - y1;
+          const len = Math.sqrt(dx * dx + dy * dy) || 1;
+          const ox = (-dy / len) * 12;
+          const oy = (dx / len) * 12;
           const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-          label.setAttribute("x", midX);
-          label.setAttribute("y", midY - 6);
+          label.setAttribute("x", midX + ox);
+          label.setAttribute("y", midY + oy - 6);
           label.setAttribute("text-anchor", "middle");
           label.setAttribute("class", "edge-label");
 
-          const parts = [];
-          if (info.mid) parts.push(`mid ${formatNumber(info.mid)}`);
-          if (info.bid && info.ask) parts.push(`bid ${formatNumber(info.bid)} / ask ${formatNumber(info.ask)}`);
-          if (!parts.length) parts.push("N/A");
-          label.textContent = `${from} → ${to}: ${parts.join("  ·  ")}`;
-          labelsGroup.appendChild(label);
+          const t1 = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+          t1.setAttribute("x", midX + ox);
+          t1.setAttribute("dy", "0");
+          const mainParts = [];
+          if (info.mid) mainParts.push(`mid ${formatNumber(info.mid)}`);
+          if (!mainParts.length) mainParts.push("N/A");
+          t1.textContent = `${from}→${to} ${mainParts.join(" | ")}`;
+          label.appendChild(t1);
 
-          const sourceLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-          sourceLabel.setAttribute("x", midX);
-          sourceLabel.setAttribute("y", midY + 12);
-          sourceLabel.setAttribute("text-anchor", "middle");
-          sourceLabel.setAttribute("class", "edge-label");
-          sourceLabel.style.fill = "var(--muted)";
-          sourceLabel.textContent = info.symbol ? `${info.symbol} (${info.via || "composed"})` : info.via || "";
-          labelsGroup.appendChild(sourceLabel);
+          const t2 = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+          t2.setAttribute("x", midX + ox);
+          t2.setAttribute("dy", "12");
+          let second = "";
+          if (info.bid && info.ask) {
+            second = `bid ${formatNumber(info.bid)} / ask ${formatNumber(info.ask)}`;
+          } else if (info.symbol) {
+            second = `${info.symbol}${info.via ? ` (${info.via})` : ""}`;
+          } else if (info.via) {
+            second = info.via;
+          }
+          t2.textContent = second;
+          label.appendChild(t2);
+
+          labelsGroup.appendChild(label);
         });
       }
 
       async function fetchFiat(assets) {
-        const url = `https://api.exchangerate.host/latest?base=USD&symbols=${encodeURIComponent(assets.join(","))}`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`exchangerate.host error: ${res.status}`);
+        const res = await fetch("https://open.er-api.com/v6/latest/USD");
+        if (!res.ok) throw new Error(`open.er-api.com error: ${res.status}`);
         const data = await res.json();
-        if (data && data.success === false) {
-          throw new Error(data.error?.type || "exchangerate.host failed");
+        if (!data || data.result !== "success") {
+          throw new Error(data?.["error-type"] || "open.er-api failed");
         }
         const rates = Object.assign({}, data.rates || {});
-        rates.USD = 1;
+        rates.USD = rates.USD || 1;
         const missing = assets.filter(a => rates[a] === undefined);
         if (missing.length) {
           throw new Error(`Missing rates for: ${missing.join(", ")}`);
@@ -654,7 +721,7 @@
             symbol: "FX (USD ref)",
           };
         });
-        return { matrix, edges, mode: "mid", tags: {}, source: "exchangerate.host (USD base, mid)" };
+        return { matrix, edges, mode: "mid", tags: {}, source: "open.er-api.com (USD base, mid)" };
       }
 
       async function fetchBinanceTicker(symbol) {
@@ -796,6 +863,7 @@
           state.lastResult = { assets, result, fetchedAt: now };
           renderMatrix(assets, result.matrix, result);
           renderTriangle(assets, result.edges);
+          updateArbChip(assets, result.matrix);
           el.updatedChip.textContent = `Updated: ${now.toLocaleTimeString()}`;
           el.sourceChip.textContent = `Source: ${result.source}`;
           setStatus({ text: "Data refreshed", level: "success" });
@@ -820,7 +888,7 @@
         if (el.assetType.value === "fiat") {
           el.priceMode.value = "mid";
           el.priceMode.disabled = false;
-          el.modeNote.textContent = "Fiat uses mid/last rates only (exchangerate.host).";
+          el.modeNote.textContent = "Fiat uses mid/last rates only (open.er-api.com, USD base).";
         } else {
           el.priceMode.disabled = false;
           el.modeNote.textContent = "Binance provides bid/ask for available crypto pairs. Missing pairs fall back to composed mid.";
