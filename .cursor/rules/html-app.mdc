@@ -116,6 +116,41 @@ If any of the above is at risk, propose the safest minimal fix.
 - Prefer patch-like edits and short rationale.
 - Keep code readable and minimal.
 
+# Tools Usage
+
+## gen_index.py - Regenerate Landing Page
+Regenerates the root `index.html` by scanning all apps in `apps/*/`.
+
+```bash
+python tools/gen_index.py
+# or via justfile:
+just gen-index
+```
+
+Features:
+- Auto-detects apps with `apps/<name>/index.html`
+- Converts folder names to human-readable titles:
+  - `housing-price-calculation` → "Housing Price Calculation"
+  - `housing_price_calculation` → "Housing Price Calculation"
+- Generates client-side search filter
+- Safe CSS with text overflow handling (ellipsis)
+
+## new_app.py - Scaffold New App
+Creates a new app folder with boilerplate `index.html`.
+
+```bash
+python tools/new_app.py <app-name>
+# or with auto-update landing page:
+python tools/new_app.py <app-name> --update-index
+
+# via justfile:
+just new-app <app-name>
+```
+
+Arguments:
+- `<app-name>`: kebab-case or snake_case folder name (e.g., `my-cool-app`)
+- `--update-index`: Also run gen_index.py after creating the app
+
 # Optional: App Directory Automation Rules
 - If user requests automation:
   - Provide a small script under /tools/ (e.g., tools/gen_index.py)

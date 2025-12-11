@@ -22,8 +22,11 @@ APPS_DIR = REPO_ROOT / "apps"
 OUTPUT = REPO_ROOT / "index.html"
 
 
-def title_case_from_kebab(name: str) -> str:
-    return " ".join(p.capitalize() for p in name.split("-") if p)
+def title_case_from_name(name: str) -> str:
+    """Convert kebab-case or snake_case folder name to Title Case."""
+    # Replace both - and _ with space, then title case each word
+    normalized = name.replace("-", " ").replace("_", " ")
+    return " ".join(p.capitalize() for p in normalized.split() if p)
 
 
 def detect_apps() -> list[dict]:
@@ -40,7 +43,7 @@ def detect_apps() -> list[dict]:
             continue
 
         folder = child.name
-        title = title_case_from_kebab(folder)
+        title = title_case_from_name(folder)
 
         apps.append(
             {
@@ -195,6 +198,8 @@ def render_index(apps: list[dict]) -> str:
       padding: 16px 16px 14px;
       background: #fff;
       transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease, border-color 120ms ease;
+      overflow: hidden;
+      min-width: 0;
     }}
 
     .card:hover {{
@@ -209,12 +214,18 @@ def render_index(apps: list[dict]) -> str:
       font-weight: 650;
       color: var(--accent);
       margin-bottom: 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }}
 
     .card-sub {{
       font-size: 12px;
       color: var(--muted);
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }}
 
     .empty {{
