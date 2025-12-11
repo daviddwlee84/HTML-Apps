@@ -5,6 +5,7 @@ Generate root index.html for a multi single-HTML apps repo.
 - Scans: apps/*/index.html
 - Generates: ./index.html
 - Uses relative links safe for GitHub Pages subpath hosting.
+- Includes a client-side search filter.
 
 No external dependencies.
 """
@@ -12,7 +13,6 @@ No external dependencies.
 from __future__ import annotations
 
 import html
-import os
 from pathlib import Path
 from datetime import datetime
 
@@ -23,7 +23,6 @@ OUTPUT = REPO_ROOT / "index.html"
 
 
 def title_case_from_kebab(name: str) -> str:
-    # "my-cool-app" -> "My Cool App"
     return " ".join(p.capitalize() for p in name.split("-") if p)
 
 
@@ -48,6 +47,7 @@ def detect_apps() -> list[dict]:
                 "folder": folder,
                 "title": title,
                 "href": f"./apps/{folder}/",
+                "path_label": f"apps/{folder}/",
             }
         )
     return apps
@@ -62,12 +62,16 @@ def render_index(apps: list[dict]) -> str:
             title = html.escape(app["title"])
             href = html.escape(app["href"])
             folder = html.escape(app["folder"])
+            path_label = html.escape(app["path_label"])
+
+            # data-search used by client-side filter
+            data_search = html.escape(f"{app['title']} {path_label} {folder}".lower())
 
             cards_html.append(
                 f"""
-                <a class="card" href="{href}">
+                <a class="card" href="{href}" data-search="{data_search}">
                   <div class="card-title">{title}</div>
-                  <div class="card-sub">apps/{folder}/</div>
+                  <div class="card-sub">{path_label}</div>
                 </a>
                 """.strip()
             )
@@ -99,6 +103,7 @@ def render_index(apps: list[dict]) -> str:
       --accent: #111827;
       --shadow: 0 6px 20px rgba(0,0,0,0.06);
       --radius: 14px;
+      --input-bg: #ffffff;
     }}
 
     * {{ box-sizing: border-box; }}
@@ -110,18 +115,24 @@ def render_index(apps: list[dict]) -> str:
     }}
 
     .wrap {{
-      max-width: 920px;
+      max-width: 980px;
       margin: 48px auto 80px;
       padding: 0 20px;
     }}
 
     header {{
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      margin-bottom: 18px;
+    }}
+
+    .head-row {{
       display: flex;
       gap: 14px;
       align-items: baseline;
       justify-content: space-between;
       flex-wrap: wrap;
-      margin-bottom: 22px;
     }}
 
     .title {{
@@ -142,10 +153,37 @@ def render_index(apps: list[dict]) -> str:
       font-size: 12px;
     }}
 
+    .search {{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }}
+
+    .search input {{
+      width: min(520px, 100%);
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      outline: none;
+      background: var(--input-bg);
+      font-size: 14px;
+    }}
+
+    .search input:focus {{
+      border-color: #cbd5e1;
+      box-shadow: 0 0 0 3px rgba(0,0,0,0.04);
+    }}
+
+    .search .count {{
+      color: var(--muted);
+      font-size: 12px;
+    }}
+
     .grid {{
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
       gap: 14px;
+      margin-top: 12px;
     }}
 
     .card {{
@@ -199,6 +237,16 @@ def render_index(apps: list[dict]) -> str:
       border-radius: 6px;
     }}
 
+    .no-match {{
+      display: none;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      background: #fafafa;
+      color: var(--muted);
+      margin-top: 14px;
+    }}
+
     footer {{
       margin-top: 28px;
       color: var(--muted);
@@ -209,22 +257,68 @@ def render_index(apps: list[dict]) -> str:
 <body>
   <div class="wrap">
     <header>
-      <div>
-        <h1 class="title">Mini Apps</h1>
-        <div class="subtitle">Multiple single-page HTML apps hosted under one GitHub Pages site.</div>
+      <div class="head-row">
+        <div>
+          <h1 class="title">Mini Apps</h1>
+          <div class="subtitle">Multiple single-page HTML apps hosted under one GitHub Pages site.</div>
+        </div>
+        <div class="meta">Generated: {html.escape(now)}</div>
       </div>
-      <div class="meta">Generated: {html.escape(now)}</div>
+
+      <div class="search">
+        <input id="q" type="search" placeholder="Search apps by name/path..." autocomplete="off" />
+        <span class="count" id="count"></span>
+      </div>
     </header>
 
-    <main class="grid">
-      {cards}
+    <main>
+      <div class="grid" id="grid">
+        {cards}
+      </div>
+      <div class="no-match" id="nomatch">
+        No matching apps. Try a different keyword.
+      </div>
     </main>
 
     <footer>
       <div>Rules: apps live in <code>apps/&lt;app-name&gt;/index.html</code>, use relative asset paths only.</div>
       <div>Local dev: <code>python -m http.server 8000</code></div>
+      <div>Generator: <code>python tools/gen_index.py</code> | Scaffold: <code>python tools/new_app.py &lt;name&gt; --update-index</code></div>
     </footer>
   </div>
+
+  <script>
+    (function () {{
+      const input = document.getElementById("q");
+      const grid = document.getElementById("grid");
+      const cards = Array.from(grid.querySelectorAll(".card"));
+      const count = document.getElementById("count");
+      const nomatch = document.getElementById("nomatch");
+
+      function update() {{
+        const q = (input.value || "").trim().toLowerCase();
+        let visible = 0;
+
+        for (const c of cards) {{
+          const hay = c.getAttribute("data-search") || "";
+          const ok = !q || hay.includes(q);
+          c.style.display = ok ? "" : "none";
+          if (ok) visible++;
+        }}
+
+        if (cards.length > 0) {{
+          count.textContent = visible + " / " + cards.length;
+          nomatch.style.display = visible === 0 ? "block" : "none";
+        }} else {{
+          count.textContent = "";
+          nomatch.style.display = "none";
+        }}
+      }}
+
+      input.addEventListener("input", update);
+      update();
+    }})();
+  </script>
 </body>
 </html>
 """
@@ -234,9 +328,7 @@ def main() -> int:
     apps = detect_apps()
     content = render_index(apps)
 
-    # Ensure folder exists
     APPS_DIR.mkdir(parents=True, exist_ok=True)
-
     OUTPUT.write_text(content, encoding="utf-8")
 
     print(f"[gen_index] Found {len(apps)} app(s).")

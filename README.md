@@ -11,10 +11,20 @@ just
 Create new app/page
 
 ```bash
-mkdir -p apps/your-demo
-# 寫 apps/your-demo/index.html
-python tools/gen_index.py
-git add .
-git commit -m "Add demo app"
-git push
+just new-app
+```
+
+> ```bash
+> mkdir -p apps/your-demo
+> # 寫 apps/your-demo/index.html
+> python tools/gen_index.py
+> git add .
+> git commit -m "Add demo app"
+> git push
+> ```
+
+Update index
+
+```bash
+just gen-index
 ```
