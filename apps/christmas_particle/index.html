@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Interactive Christmas Particle System</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <div id="container"></div>
+
+    <!-- UI Overlay -->
+    <div id="ui-container">
+        <div id="controls">
+            <div class="control-group">
+                <div class="mode-switch">
+                    <label class="mode-option" data-mode="camera">
+                        📷 摄像头
+                    </label>
+                    <label class="mode-option active" data-mode="mouse">
+                        🖱️ 鼠标
+                    </label>
+                </div>
+            </div>
+
+            <button id="fullscreen-btn">全屏模式</button>
+            <div class="upload-wrapper">
+                <label for="image-upload" class="custom-file-upload">
+                    上传照片 (添加到树上)
+                </label>
+                <input id="image-upload" type="file" multiple accept="image/*" />
+            </div>
+        </div>
+        <div id="instructions">
+            <div id="inst-camera" style="display: none;">
+                <p>🖐 <b>张开手掌</b>: 粒子散开旋转</p>
+                <p>✊ <b>握拳</b>: 聚合成圣诞树</p>
+                <p>👌 <b>捏合</b>: 抓取查看照片</p>
+            </div>
+            <div id="inst-mouse">
+                <p>🖱️ <b>移动</b>: 控制交互位置</p>
+                <p>🖱️ <b>左键按住</b>: 聚合成圣诞树</p>
+                <p>🖱️ <b>右键按住</b>: 抓取查看照片</p>
+                <p>🖱️ <b>松开</b>: 粒子散开旋转</p>
+            </div>
+        </div>
+        <div id="loading">正在加载模型与摄像头...</div>
+    </div>
+
+    <!-- Video Element for MediaPipe (Hidden) -->
+    <video id="input-video" style="display:none;"></video>
+
+    <!-- Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+
+    <script type="module" src="main.js"></script>
+</body>
+
+</html>
