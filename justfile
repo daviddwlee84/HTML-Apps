@@ -4,6 +4,9 @@ python-serve:
 new-app name:
     python tools/new_app.py {{name}} --update-index
 
+new-app-interactive:
+    python tools/new_app_interactive.py
+
 gen-index:
     python tools/gen_index.py
 

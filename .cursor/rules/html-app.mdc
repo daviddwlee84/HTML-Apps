@@ -151,6 +151,29 @@ Arguments:
 - `<app-name>`: kebab-case or snake_case folder name (e.g., `my-cool-app`)
 - `--update-index`: Also run gen_index.py after creating the app
 
+## new_app_interactive.py - Interactive App Wizard
+Interactive version with step-by-step prompts and customizable options.
+
+```bash
+python tools/new_app_interactive.py
+
+# via justfile:
+just new-app-interactive
+```
+
+Features:
+- Interactive prompts with sensible defaults (press Enter to accept)
+- Customizable options:
+  - Folder name (required, kebab-case)
+  - Title (default: derived from folder name)
+  - Description for SEO meta tags (default: generic description)
+  - Include style.css (default: yes)
+  - Include main.js (default: yes)
+  - Include assets/ folder (default: yes)
+  - Run gen_index.py after creation (default: yes)
+- Configuration summary before creation
+- Displays created files list and URLs
+
 # Optional: App Directory Automation Rules
 - If user requests automation:
   - Provide a small script under /tools/ (e.g., tools/gen_index.py)
