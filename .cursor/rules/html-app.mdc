@@ -1,0 +1,126 @@
+---
+alwaysApply: true
+---
+
+# Cursor Rules for Multi Single-HTML Apps on GitHub Pages
+# Repo goal:
+# - Host multiple single-page HTML apps in one GitHub repo via GitHub Pages.
+# - Each app should be independently accessible by subpath.
+# - Provide a clean local dev workflow with a simple static server.
+
+You are an assistant working in a monorepo of multiple small single-page HTML apps.
+This repo is deployed to GitHub Pages under a subpath:
+https://<username>.github.io/<repo>/
+
+Follow these rules strictly:
+
+## 1) Repository Structure Conventions
+- The canonical structure is:
+  /
+    index.html                (landing page / app directory)
+    apps/
+      <app-name>/
+        index.html
+        assets/...
+        style.css (optional)
+        main.js   (optional)
+    shared/                   (optional shared utilities)
+      css/
+      js/
+
+- Each app MUST live in `apps/<app-name>/`.
+- Each app MUST have an `index.html` at its folder root.
+
+## 2) GitHub Pages Path Safety
+- NEVER use absolute-root URLs like:
+  "/main.js", "/style.css", "/assets/foo.png"
+  because GitHub Pages will serve under "/<repo>/".
+- ALWAYS use relative paths from the current document:
+  "./main.js", "./style.css", "./assets/foo.png"
+  or proper relative traversal:
+  "../../shared/js/utils.js"
+
+- When updating or creating HTML, verify all asset paths are safe for subpath hosting.
+
+## 3) App Independence
+- Each app should be buildless or minimal-build by default.
+- Avoid cross-app coupling.
+- Shared code is allowed only in `/shared/` and must be referenced via relative paths.
+
+## 4) Tech Stack Preferences
+- Prefer plain HTML/CSS/Vanilla JS.
+- Avoid heavy frameworks unless explicitly requested.
+- If using modules, ensure they work under static hosting without bundling.
+
+## 5) Local Development
+- Provide a simple local serve command.
+- Preferred default:
+  `python -m http.server 8000`
+- If adding npm tooling, keep it lightweight (e.g., "serve", "http-server") and optional.
+
+- If you add scripts, prefer:
+  package.json:
+    "scripts": {
+      "serve": "python -m http.server 8000"
+    }
+  but ONLY if user wants Node tooling.
+  Otherwise do not introduce Node dependencies.
+
+## 6) Landing Page
+- `/index.html` must act as a friendly directory of apps.
+- When adding a new app:
+  - Update the landing page with a link:
+    "./apps/<app-name>/"
+  - Keep the list alphabetically ordered unless otherwise specified.
+
+- Style of landing page:
+  - Simple, clean, minimal CSS.
+  - Label apps with short human-friendly names.
+
+## 7) Naming Rules
+- App folder names use kebab-case: "orderbook-viewer", "fvg-demo", "portfolio-toy".
+- Avoid spaces and uppercase in folder names.
+
+## 8) No Breaking Changes
+- Do not restructure existing app folders without explicit instruction.
+- Do not change working URLs.
+
+## 9) Documentation
+- Maintain a concise README.md describing:
+  - How to add a new app.
+  - The GitHub Pages URL pattern.
+  - Local serve instructions.
+  - Path rules (relative paths only).
+
+- If README doesn’t exist, create a minimal one.
+
+## 10) Quality Checklist Before Finalizing Changes
+When you create or modify an app, ensure:
+- `apps/<app-name>/index.html` exists.
+- All assets referenced with RELATIVE paths.
+- Link from root `index.html` is present.
+- The app loads under:
+  - Local static server
+  - GitHub Pages subpath
+
+If any of the above is at risk, propose the safest minimal fix.
+
+## 11) What NOT to do
+- Do not add build pipelines (Vite/Webpack/etc.) unless the user asks.
+- Do not introduce server-side code.
+- Do not assume "/" is the site root.
+- Do not auto-generate huge catalogs or overly complex UI.
+
+## 12) Default Output Style
+- Provide changes in small, reviewable steps.
+- Prefer patch-like edits and short rationale.
+- Keep code readable and minimal.
+
+# Optional: App Directory Automation Rules
+- If user requests automation:
+  - Provide a small script under /tools/ (e.g., tools/gen_index.py)
+  - The script should:
+    - List subfolders in /apps/
+    - Detect presence of index.html
+    - Regenerate root index.html links
+  - The script must not require external dependencies by default.
