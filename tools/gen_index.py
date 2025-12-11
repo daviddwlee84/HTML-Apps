@@ -203,6 +203,101 @@ def render_index(apps: list[dict]) -> str:
       font-size: 12px;
     }}
 
+    /* View Mode Toggle */
+    .view-toggle {{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }}
+    .view-toggle label {{ cursor: pointer; user-select: none; }}
+    .toggle-switch {{
+      position: relative;
+      width: 44px;
+      height: 24px;
+    }}
+    .toggle-switch input {{ opacity: 0; width: 0; height: 0; }}
+    .toggle-slider {{
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #e5e7eb;
+      transition: 0.2s;
+      border-radius: 24px;
+    }}
+    .toggle-slider:before {{
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.2s;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }}
+    .toggle-switch input:checked + .toggle-slider {{ background-color: var(--accent); }}
+    .toggle-switch input:checked + .toggle-slider:before {{ transform: translateX(20px); }}
+    .toggle-switch input:focus + .toggle-slider {{ box-shadow: 0 0 0 2px rgba(0,0,0,0.1); }}
+
+    /* Framed Mode - Navbar + iframe */
+    .frame-container {{
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 1000;
+      flex-direction: column;
+      background: var(--bg);
+    }}
+    .frame-container.active {{ display: flex; }}
+    .frame-navbar {{
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 14px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }}
+    .frame-navbar .nav-btn {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(255,255,255,0.15);
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s;
+      text-decoration: none;
+    }}
+    .frame-navbar .nav-btn:hover {{ background: rgba(255,255,255,0.25); }}
+    .frame-navbar .nav-title {{
+      flex: 1;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }}
+    .frame-navbar .nav-path {{
+      font-size: 12px;
+      opacity: 0.7;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }}
+    .app-iframe {{
+      flex: 1;
+      border: none;
+      width: 100%;
+      height: 100%;
+    }}
+
     .grid {{
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -287,6 +382,27 @@ def render_index(apps: list[dict]) -> str:
   </style>
 </head>
 <body>
+  <!-- Frame container for "Framed" mode -->
+  <div class="frame-container" id="frameContainer">
+    <nav class="frame-navbar">
+      <button class="nav-btn" id="navHome" title="Back to Home">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l5-6 5 6"/><path d="M4 8v7h8V8"/>
+        </svg>
+        Home
+      </button>
+      <div class="nav-title" id="navTitle">App Name</div>
+      <span class="nav-path" id="navPath">apps/example/</span>
+      <a class="nav-btn" id="navOpen" href="#" target="_blank" title="Open in new tab">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 2H2v10h10V7"/><path d="M9 1h4v4"/><path d="M13 1L6 8"/>
+        </svg>
+        Open
+      </a>
+    </nav>
+    <iframe class="app-iframe" id="appIframe" src="about:blank"></iframe>
+  </div>
+
   <div class="wrap">
     <header>
       <div class="head-row">
@@ -300,6 +416,16 @@ def render_index(apps: list[dict]) -> str:
       <div class="search">
         <input id="q" type="search" placeholder="Search apps by name/path..." autocomplete="off" />
         <span class="count" id="count"></span>
+      </div>
+
+      <div class="view-toggle">
+        <span>Full Page</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="viewMode" />
+          <span class="toggle-slider"></span>
+        </label>
+        <span>Framed</span>
+        <span style="margin-left: 4px; font-size: 11px; opacity: 0.7;" title="Framed mode keeps a navigation bar visible so you can easily return home">(ℹ️)</span>
       </div>
     </header>
 
@@ -321,13 +447,14 @@ def render_index(apps: list[dict]) -> str:
 
   <script>
     (function () {{
+      // === Search functionality ===
       const input = document.getElementById("q");
       const grid = document.getElementById("grid");
       const cards = Array.from(grid.querySelectorAll(".card"));
       const count = document.getElementById("count");
       const nomatch = document.getElementById("nomatch");
 
-      function update() {{
+      function updateSearch() {{
         const q = (input.value || "").trim().toLowerCase();
         let visible = 0;
 
@@ -347,8 +474,88 @@ def render_index(apps: list[dict]) -> str:
         }}
       }}
 
-      input.addEventListener("input", update);
-      update();
+      input.addEventListener("input", updateSearch);
+      updateSearch();
+
+      // === View Mode Toggle (Full Page vs Framed) ===
+      const STORAGE_KEY = "miniapps_view_mode";
+      const viewModeToggle = document.getElementById("viewMode");
+      const frameContainer = document.getElementById("frameContainer");
+      const appIframe = document.getElementById("appIframe");
+      const navTitle = document.getElementById("navTitle");
+      const navPath = document.getElementById("navPath");
+      const navOpen = document.getElementById("navOpen");
+      const navHome = document.getElementById("navHome");
+
+      // Load saved preference
+      function loadViewMode() {{
+        const saved = localStorage.getItem(STORAGE_KEY);
+        viewModeToggle.checked = saved === "framed";
+      }}
+
+      // Save preference
+      function saveViewMode() {{
+        localStorage.setItem(STORAGE_KEY, viewModeToggle.checked ? "framed" : "fullpage");
+      }}
+
+      viewModeToggle.addEventListener("change", saveViewMode);
+      loadViewMode();
+
+      // Check if we're in framed mode
+      function isFramedMode() {{
+        return viewModeToggle.checked;
+      }}
+
+      // Open app in frame
+      function openInFrame(href, title, path) {{
+        navTitle.textContent = title;
+        navPath.textContent = path;
+        navOpen.href = href;
+        appIframe.src = href;
+        frameContainer.classList.add("active");
+        document.body.style.overflow = "hidden";
+      }}
+
+      // Close frame and go home
+      function closeFrame() {{
+        frameContainer.classList.remove("active");
+        appIframe.src = "about:blank";
+        document.body.style.overflow = "";
+      }}
+
+      // Home button click
+      navHome.addEventListener("click", function(e) {{
+        e.preventDefault();
+        closeFrame();
+      }});
+
+      // Handle card clicks
+      for (const card of cards) {{
+        card.addEventListener("click", function(e) {{
+          if (isFramedMode()) {{
+            e.preventDefault();
+            const href = card.getAttribute("href");
+            const title = card.querySelector(".card-title").textContent;
+            const path = card.querySelector(".card-sub").textContent;
+            openInFrame(href, title, path);
+          }}
+          // else: default behavior (navigate to app)
+        }});
+      }}
+
+      // ESC key to close frame
+      document.addEventListener("keydown", function(e) {{
+        if (e.key === "Escape" && frameContainer.classList.contains("active")) {{
+          closeFrame();
+        }}
+      }});
+
+      // Handle browser back button when frame is open
+      window.addEventListener("popstate", function() {{
+        if (frameContainer.classList.contains("active")) {{
+          closeFrame();
+        }}
+      }});
     }})();
   </script>
 </body>
